@@ -1,0 +1,98 @@
+## DOWNLOAD PACKAGES
+
+#!/bin/bash
+#SBATCH -t 1:00:00
+#SBATCH -o download.log
+#SBATCH -e download.err
+
+cd /hpc/hers_basak/rnaseq_data/Basaklab/jjiang/software
+
+wget https://ftp.cngb.org/pub/Tool/Aspera/ibm-aspera-connect_4.2.2.135_linux.ta$
+tar -zxvf ibm-aspera-connect-3.11.1.58-linux-g2.12-64.tar.gz
+sh ibm-aspera-connect-3.11.1.58-linux-g2.12-64.sh
+
+#########################################################################
+
+## USE ASPERA FOR CNSA FASTQ DOWNLOAD
+
+#!/bin/bash
+#SBATCH -t 12:00:00
+#SBATCH --mem=100G
+#SBATCH --cpus-per-task=3
+#SBATCH -o smajic2021_data_test.log
+#SBATCH -e smajic2021_data_test.err
+#SBATCH --array=0-1%2
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=c.j.r.jiang@umcutrecht.nl
+
+cd /hpc/hers_basak/rnaseq_data/Basaklab/jjiang/fasta_files/mus_mus/zhong_2021
+
+
+# -i: aspera key
+# -P: ssh-port (default 22)
+# -T: disable encryption for max throughput
+# -k1: resume partially transferred file (default 0)
+# -l: target transfer rate in kbps (default 10000)
+ascp -i /hpc/hers_basak/rnaseq_data/Basaklab/jjiang/software/aspera_download.key -P33001 -T -k1 -l100m aspera_download@183.239.175.39:/pub/CNSA/data3/CNP0000892/CNS0195744/CNX0143532/CNR0176487/ /hpc/hers_basak/rnaseq_data/Basaklab/jjiang/fasta_files/mus_mus/zhong_2021
+
+
+
+#########################################################################
+
+
+## DOWNLOADING FASTQ FILES FROM SRA (see https://github.com/ncbi/sra-tools for quick start)
+# First configure SRA toolkit (run it in terminal as it is an interactive program)
+
+# Make sure to enable "Remote Access" in main screen
+# Disable "local file-caching" in the cache tab 
+# Set your user-repository location in the cache tab (needs to be empty, prefetch deposits the files here) You can use "vdb-config --prefetch-to-cwd" to set it as current working directory
+# Accept "report cloud instance identity" in the cloud provider tab
+/hpc/hers_basak/bin/software/sratoolkit.3.0.0-centos_linux64/bin/vdb-config --interactive
+
+
+#########################################################################
+
+## fastq-dump
+## 2x 12.5GB with 3 cpus per task and default 6 threads per call took ~4h
+## On paired reads and mate pair reads: https://gatk.broadinstitute.org/hc/en-us/articles/360035531792-Paired-end-or-mate-pair
+
+#!/bin/bash
+#SBATCH -t 12:00:00
+#SBATCH --mem=100G
+#SBATCH --cpus-per-task=3
+#SBATCH -o smajic2021_data_test.log
+#SBATCH -e smajic2021_data_test.err
+#SBATCH --array=0-1%2
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=c.j.r.jiang@umcutrecht.nl
+
+# Set to working directory
+cd /hpc/hers_basak/rnaseq_data/Basaklab/jjiang/fasta_files/homo_sap/smajic2021
+
+# Set output directory
+output=/hpc/hers_basak/rnaseq_data/Basaklab/jjiang/fasta_files/homo_sap/smajic2021
+
+# Array of SRA IDs
+IDS=(SRR12621872
+SRR12621871
+)
+
+# Download the fastq files
+# You might need to increase download limit if a single file is larger than 20GB, for example if its 35GB you can use prefetch SRR0000001 --max-size 40000000000
+
+prefetch ${IDS[$SLURM_ARRAY_TASK_ID]} -o ${output}
+
+
+# Extract fastq file
+# You might want to use one of the split parameters when working with pair end reads.
+# --origfmt: use original header
+# --split-files: writes reads into mate 1s, mate 2s and no mateless files
+# --split-3: gives 1-3 files (R1, R2 and low Q reads respectively)
+# --gzip: zip the fastq files
+
+fastq-dump --origfmt --split-3 -O ${output} --gzip  ${IDS[$SLURM_ARRAY_TASK_ID]}
+
+
+##########################################################################
+
+

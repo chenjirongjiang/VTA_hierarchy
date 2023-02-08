@@ -1,0 +1,226 @@
+## CELLRANGER_VTA
+# Align 10x Chromium scRNAseq data using the Cellranger 6.1 pipeline on hpc server
+
+## Transfer the data on the server ##
+# On the server, generate a new folder to transfer the new data in:
+mkdir /hpc/hers_basak/rnaseq_data/Basaklab/data_SCDiscoveries/first_run/
+
+# from within UMCU network:
+rsync -avzP /Users/path_to_my_fastq_files/raw_fastq/ hpct01:/hpc/hers_basak/rnaseq_data/Basaklab/data_SCDiscoveries/first_run/
+# or use filezilla/cyberduck to connect to the server
+
+# enter the folder where mapping results will be placed:
+cd /hpc/hers_basak/rnaseq_data/Basaklab/mapping/cellranger_VTA/first_run/
+
+
+# For each alignment, generate a shell script file
+
+### For g001 -> map_g001.sh
+
+#!/bin/bash
+#SBATCH -t 06:00:00
+#SBATCH --mem=128G
+#SBATCH --cpus-per-task=16
+#SBATCH -o log.out
+#SBATCH -e errlog.out
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=o.basak@umcutrecht.nl
+cellranger count --id=VTA_g001_human_intron \
+--fastqs=/hpc/hers_basak/rnaseq_data/Basaklab/data_SCDiscoveries/first_run/raw_fastq/UMC-AR-g001 \
+--sample=UMC-AR-g001 \
+--transcriptome=/hpc/hers_basak/bin/reference_genomes_cellranger/refdata-gex-GRCh38-2020-A/ \
+--include-introns
+
+### For g002 -> map_g002.sh
+
+#!/bin/bash
+#SBATCH -t 06:00:00
+#SBATCH --mem=128G
+#SBATCH --cpus-per-task=16
+#SBATCH -o log.out
+#SBATCH -e errlog.out
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=o.basak@umcutrecht.nl
+cellranger count --id=VTA_g002_human_intron \
+--fastqs=/hpc/hers_basak/rnaseq_data/Basaklab/data_SCDiscoveries/first_run/raw_fastq/UMC-AR-g002 \
+--sample=UMC-AR-g002 \
+--transcriptome=/hpc/hers_basak/bin/reference_genomes_cellranger/refdata-gex-GRCh38-2020-A/ \
+--include-introns
+
+### For g003 -> map_g003.sh
+
+#!/bin/bash
+#SBATCH -t 06:00:00
+#SBATCH --mem=128G
+#SBATCH --cpus-per-task=16
+#SBATCH -o log.out
+#SBATCH -e errlog.out
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=o.basak@umcutrecht.nl
+cellranger count --id=VTA_g003_mouse_intron \
+--fastqs=/hpc/hers_basak/rnaseq_data/Basaklab/data_SCDiscoveries/first_run/raw_fastq/UMC-AR-g003 \
+--sample=UMC-AR-g003 \
+--transcriptome=/hpc/hers_basak/bin/reference_genomes_cellranger/refdata-gex-mm10-2020-A/ \
+--include-introns
+
+#submit:
+sbatch map_g001.sh
+sbatch map_g002.sh
+sbatch map_g003.sh
+
+### HOW TO KNOW IT IS DONE ###
+# You will get an email!
+# check if the generated files have all the important files you expect. Check previous mapping results
+
+#transfer
+rsync -avzP hpct01:/hpc/hers_basak/rnaseq_data/Basaklab/mapping/cellranger_VTA/ /Users/onurbasak/Documents/1_BCRM/3_computational_analysis/analysis_sc/Basak_lab/Tiziana/10Genomics_VTA/first_run/
+
+#### velocyto
+# I used the .msk files to mask repeats, but this may have resulted in much less reads. 
+# Leave it '.../GRCh38_rmsk.gtf' and '.../mm10_rmsk.gtf' sections out and try again
+
+
+
+## velo_VTA_g001.sh
+
+#!/bin/bash
+#SBATCH -t 06:00:00
+#SBATCH --mem=128G
+#SBATCH --cpus-per-task=8
+#SBATCH -o velo_VTA_g001.log
+#SBATCH -e velo_VTA_g001.err
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=o.basak@umcutrecht.nl
+source /hpc/hers_basak/bin/miniconda3/etc/profile.d/conda.sh
+conda activate velocyto 
+velocyto run10x -m /hpc/hers_basak/bin/reference_genomes_cellranger/GRCh38_rmsk.gtf /hpc/hers_basak/rnaseq_data/Basaklab/mapping/cellranger_VTA/VTA_g001_human_intron /hpc/hers_basak/bin/reference_genomes_cellranger/refdata-gex-GRCh38-2020-A/genes/genes.gtf 
+
+## velo_VTA_g002.sh
+
+#!/bin/bash
+#SBATCH -t 06:00:00
+#SBATCH --mem=128G
+#SBATCH --cpus-per-task=8
+#SBATCH -o velo_VTA_g002.log
+#SBATCH -e velo_VTA_g002.err
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=o.basak@umcutrecht.nl
+source /hpc/hers_basak/bin/miniconda3/etc/profile.d/conda.sh
+conda activate velocyto 
+velocyto run10x -m /hpc/hers_basak/bin/reference_genomes_cellranger/GRCh38_rmsk.gtf /hpc/hers_basak/rnaseq_data/Basaklab/mapping/cellranger_VTA/VTA_g002_human_intron /hpc/hers_basak/bin/reference_genomes_cellranger/refdata-gex-GRCh38-2020-A/genes/genes.gtf 
+
+## velo_VTA_g003.sh
+
+#!/bin/bash
+#SBATCH -t 06:00:00
+#SBATCH --mem=128G
+#SBATCH --cpus-per-task=8
+#SBATCH -o velo_VTA_g003.log
+#SBATCH -e velo_VTA_g003.err
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=o.basak@umcutrecht.nl
+source /hpc/hers_basak/bin/miniconda3/etc/profile.d/conda.sh
+conda activate velocyto 
+velocyto run10x -m /hpc/hers_basak/bin/reference_genomes_cellranger/mm10_rmsk.gtf /hpc/hers_basak/rnaseq_data/Basaklab/mapping/cellranger_VTA/VTA_g003_mouse_intron /hpc/hers_basak/bin/reference_genomes_cellranger/refdata-gex-mm10-2020-A/genes/genes.gtf 
+
+## Transfer ##
+rsync -avzP hpct01:/hpc/hers_basak/rnaseq_data/Basaklab/mapping/cellranger_VTA/ /Users/onurbasak/Documents/1_BCRM/3_computational_analysis/analysis_sc/Basak_lab/Tiziana/10Genomics_VTA/first_run/
+
+
+
+#### second_run_human
+## The data was already mapped to the genome, using cellranger6.2.2
+## genomie version:
+## Still. we need to do this to get velocyto results. 
+## velocyto: This time leave out the masking for repeats! Maybe the reason why it found many less reads than the standard 10x pipeline
+## Transcriptome used is GRCh38-2020-A, the same as ours
+## create a directory
+mkdir /hpc/hers_basak/rnaseq_data/Basaklab/data_SCDiscoveries/second_run_human/
+cd /hpc/hers_basak/rnaseq_data/Basaklab/data_SCDiscoveries/second_run_human/
+
+#Transfer data
+wget -O "20220214-UMC-AR.7z" "https://lfs-524eb86fd2c047f88bb46c15dec5d6bc.s3.eu-central-1.amazonaws.com/20220214-UMC-AR.7z?X-Amz-Expires=604800&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAY2OVEAGUMZKRC54A/20220214/eu-central-1/s3/aws4_request&X-Amz-Date=20220214T202850Z&X-Amz-SignedHeaders=host&X-Amz-Signature=3c2ad6ca9ca66c35dabbb7d5f2837e23ae929a81115f176d9ef03fa2d1846d98"
+
+# For each alignment, generate a shell script file
+
+### For g004 -> map_g004.sh
+
+#!/bin/bash
+#SBATCH -t 06:00:00
+#SBATCH --mem=128G
+#SBATCH --cpus-per-task=16
+#SBATCH -o g004.log
+#SBATCH -e g004.err
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=o.basak@umcutrecht.nl
+cellranger count --id=VTA_g004_human_intron \
+--fastqs=/hpc/hers_basak/rnaseq_data/Basaklab/data_SCDiscoveries/first_run/raw_fastq/UMC-AR-g004 \
+--sample=UMC-AR-g004 \
+--transcriptome=/hpc/hers_basak/bin/reference_genomes_cellranger/refdata-gex-GRCh38-2020-A/ \
+--include-introns
+
+sbatch map_g004.sh
+
+### For g005 -> map_g005.sh
+
+#!/bin/bash
+#SBATCH -t 06:00:00
+#SBATCH --mem=128G
+#SBATCH --cpus-per-task=16
+#SBATCH -o g005.log
+#SBATCH -e g005.err
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=o.basak@umcutrecht.nl
+cellranger count --id=VTA_g005_human_intron \
+--fastqs=/hpc/hers_basak/rnaseq_data/Basaklab/data_SCDiscoveries/first_run/raw_fastq/UMC-AR-g005 \
+--sample=UMC-AR-g005 \
+--transcriptome=/hpc/hers_basak/bin/reference_genomes_cellranger/refdata-gex-GRCh38-2020-A/ \
+--include-introns
+
+rsync -avzP hpct01:/hpc/hers_basak/rnaseq_data/Basaklab/data_SCDiscoveries/second_run_human/ /Users/onurbasak/Documents/1_BCRM/3_computational_analysis/analysis_sc/Basak_lab/Tiziana/10Genomics_VTA/second_run/
+
+
+
+### For all, in a raw
+# First, we will need to remap them since the original files are not in -> map_g005.sh
+
+
+
+
+
+
+# Install p7zip
+yumdownloader --destdir /hpc/hers_basak/bin/software/ --assumeyes p7zip
+rpm2cpio /hpc/hers_basak/bin/software/p7zip-16.02-20.el7.x86_64.rpm | cpio -id
+
+
+export PATH="/hpc/hers_basak/bin/software/usr/sbin:/hpc/hers_basak/bin/software/usr/bin:$PATH"
+
+export MANPATH="/hpc/hers_basak/bin/software/usr/share/man:$MANPATH"
+
+L='/lib:/lib64:/usr/lib:/usr/lib64'
+export LD_LIBRARY_PATH="/hpc/hers_basak/bin/software/usr/lib:/hpc/hers_basak/bin/software/usr/lib64:$L"
+
+7za x 20220214-UMC-AR.7z -pWe3-WB+.hLxJ60L4.eHriAziASA6H.ph
+
+
+
+### mapping with GFP and tdTomato:
+
+### For g003 -> map_tom_g003.sh
+
+#!/bin/bash
+#SBATCH -t 06:00:00
+#SBATCH --mem=128G
+#SBATCH --cpus-per-task=16
+#SBATCH -o map_tom_g003.log
+#SBATCH -e map_tom_g003.err
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=o.basak@umcutrecht.nl
+cellranger count --id=VTA_g003_tom \
+--fastqs=/hpc/hers_basak/rnaseq_data/Basaklab/data_SCDiscoveries/first_run/raw_fastq/UMC-AR-g003 \
+--sample=UMC-AR-g003 \
+--transcriptome=/hpc/hers_basak/bin/reference_genomes_cellranger/tdtomato_gfp_cre_refdata-gex-mm10-2020-A/ \
+--include-introns
+
+

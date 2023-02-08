@@ -1,0 +1,22 @@
+# Alignment
+
+#!/bin/bash
+#SBATCH -t 12:00:00
+#SBATCH --mem=128G
+#SBATCH --cpus-per-task=16
+#SBATCH -o alignment.log
+#SBATCH -e alignment.err
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=c.j.r.jiang@umcutrecht.nl
+
+# Move to count folder
+cd /hpc/hers_basak/rnaseq_data/Basaklab/jjiang/count_files
+
+# --id: unique run id and ouput folder name
+# --fastqs: path to sequence files
+# --sample: prefix of fastqs to select
+# --transcriptome: path to folder with 10x-compatible transcriptome reference
+# --include-introns: include intronic reads in count
+
+cellranger count --id=zhong_2021 --fastqs=/hpc/hers_basak/rnaseq_data/Basaklab/jjiang/fasta_files/mus_mus/zhong_2021/CNR0176487/ --transcriptome=/hpc/hers_basak/bin/reference_genomes_cellranger/refdata-gex-mm10-2020-A/ --include-introns
+
