@@ -11,4 +11,4 @@
 
 cd /hpc/hers_basak/rnaseq_data/Basaklab/jjiang/outputs/fastqc/
 
-fastqc -o /hpc/hers_basak/rnaseq_data/Basaklab/jjiang/outputs/fastqc/ -f /hpc/hers_basak/rnaseq_data/Basaklab/jjiang/fasta_files/mus_mus/zhong_2021/CNR0176487/*.fastq.gz -d /home/hers_basak/jjiang/temp/ 
+fastqc -o /hpc/hers_basak/rnaseq_data/Basaklab/jjiang/outputs/fastqc/sauders_2018 -f /hpc/hers_basak/rnaseq_data/Basaklab/jjiang/outputs/fasta_files/mus_mus/saunders_2018/*.fastq.gz -d /home/hers_basak/jjiang/temp/ 

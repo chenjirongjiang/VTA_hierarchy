@@ -1,0 +1,29 @@
+## .sh file for running python script
+
+#!/bin/bash
+#SBATCH -t 01:00:00
+#SBATCH --mem=10G
+#SBATCH --cpus-per-task=2
+#SBATCH -o read_h5ad.log
+#SBATCH -e read_h5ad.err
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=c.j.r.jiang@umcutrecht.nl
+
+pyscript=/hpc/hers_basak/rnaseq_data/Basaklab/jjiang/scripts/1_h5ad/
+source /hpc/hers_basak/bin/miniconda3/etc/profile.d/conda.sh 
+conda activate sc2_seurat
+
+python ${pyscript}
+
+##################################################################
+
+## Python script for filtering h5ad file
+import scanpy as sp
+
+file='/hpc/hers_basak/rawdata/literature/Siletti_human_brain/Neurons.h5ad'
+
+# read_h5ad returns anndata object 
+adata=sp.read_h5ad(filename=file)
+
+# Get obs of data and possible values for obs
+adata

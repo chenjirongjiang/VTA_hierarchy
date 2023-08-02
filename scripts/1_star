@@ -1,0 +1,170 @@
+## GENOME INDEX GENERATION (wit GFF file)
+
+#!/bin/bash
+#SBATCH -t 6:00:00
+#SBATCH --mem=60G
+#SBATCH --cpus-per-task=8
+#SBATCH -o index.log
+#SBATCH -e index.err
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=c.j.r.jiang@umcutrecht.nl
+
+# enter the working directory
+cd /hpc/hers_basak/rnaseq_data/Basaklab/jjiang/training/1_STAR/star_index
+
+# specify where your genome file and the fastq files are
+genomeDir=/hpc/hers_basak/rnaseq_data/Basaklab/jjiang/outputs/fasta_files/mus_mus/saunders_2018/star_index
+fasta_files=/hpc/hers_basak/rnaseq_data/Basaklab/jjiang/training/1_STAR/ref_genome/GRCh38_latest_genomic.fna
+annotation=/hpc/hers_basak/rnaseq_data/Basaklab/jjiang/training/1_STAR/ref_genome/GRCh38_latest_genomic.gff
+
+# --sjdbGTFtagExonParentTranscript Parent (for GFF3 files)
+/hpc/hers_basak/rnaseq_data/Basaklab/cherbermann/software/STAR-2.7.10b/source/STAR --runThreadN 8 --runMode genomeGenerate --genomeDir ${genomeDir} --genomeFastaFiles ${fasta_files} --sjdbGTFfile ${annotation} --sjdbOverhang 74 --sjdbGTFtagExonParentTranscript Parent
+
+##########################################################
+
+## GENOME ALIGNMENT WITH STAR-2.5.3a
+# SOLUTION: check that the path to genome files, specified in --genomeDir is correct and the files are present, and have user read permsissions
+
+
+#!/bin/bash
+#SBATCH -t 24:00:00
+#SBATCH --mem=128G
+#SBATCH --cpus-per-task=16
+#SBATCH -o align.log
+#SBATCH -e align.err
+#SBATCH --array=0-2%3
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=c.j.r.jiang@umcutrecht.nl                                                                                                                                                                                               
+
+# enter the working directory
+cd /hpc/hers_basak/rnaseq_data/Basaklab/jjiang/training/1_STAR
+
+
+# specify where your genome file and the fastq files are
+genomeDir=/hpc/hers_basak/bin/reference_genomes_cellranger/refdata-gex-mm10-2020-A/star/
+fqDir=/hpc/hers_basak/rnaseq_data/Basaklab/jjiang/outputs/fasta_files/mus_mus/saunders_2018/
+
+NAMES=(SRR7457270
+SRR7457271
+SRR7457274
+)
+
+# Set the input file names and the output prefix, including the exact directory
+file2map=${fqDir}${NAMES[$SLURM_ARRAY_TASK_ID]}.fastq.gz
+outfq=/hpc/hers_basak/rnaseq_data/Basaklab/jjiang/outputs/fasta_files/mus_mus/saunders_2018/bam_files/${NAMES[$SLURM_ARRAY_TASK_ID]}
+
+# --runThreadN: NumberOfThreads
+# --runMode: genomeGenerate -> run genome indix generation
+# --genomeDir: /path/to/genomeDir
+# --readFilesCommand: are read file uncompressed -> UncompressionCommand,
+#                                         are read file compressed -> gunzip
+# --genomeFastaFiles: /path/to/genome/fasta1 /path/to/genome/fasta2 (only for genome generation and aligning reads to extra sequences e.g. spike-ins)
+# --readFilesIn /path/to/read1 [/path/to/read2 ]
+
+# --outSAMtype: SAM/BAM (Unsorted/ SortedByCoordinate)
+# --sjdbGTFfile: /path/to/annotations.gtf
+# --sjdbOverhang: ReadLength-1
+
+# --limitBAMsortRAM: Amount of ram for BAM sorting, default = genome index size.
+
+STAR --runThreadN 16 --genomeDir ${genomeDir} --readFilesCommand gunzip -c --readFilesIn ${file2map} --outFileNamePrefix ${outfq} --outSAMtype BAM SortedByCoordinate --limitBAMsortRAM 30000000000
+
+######################################################################
+
+## HTSEQ-COUNT FOR BAM TO COUNT FILE
+
+# Need to index the bam files first
+
+#!/bin/bash
+#SBATCH -t 4:00:00
+#SBATCH --mem=20G
+#SBATCH --cpus-per-task=1
+#SBATCH -o htseq.log
+#SBATCH -e htseq.err
+#SBATCH --array=0-1%2
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=c.j.r.jiang@umcutrecht.nl  
+
+cd /hpc/hers_basak/rnaseq_data/Basaklab/jjiang/training/1_STAR/count_files/
+
+bam_directory=/hpc/hers_basak/rnaseq_data/Basaklab/jjiang/training/1_STAR/star_output/
+NAMES=(Astro1Aligned.sortedByCoord.out.bam
+Astro2Aligned.sortedByCoord.out.bam
+)
+
+samtools index ${bam_directory}${NAMES[$SLURM_ARRAY_TASK_ID]}
+
+#HTSEQ COUNT (scRNA seq)
+
+#!/bin/bash
+#SBATCH -t 4:00:00
+#SBATCH --mem=20G
+#SBATCH --cpus-per-task=1
+#SBATCH -o htseq.log
+#SBATCH -e htseq.err
+#SBATCH --array=0-1%2
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=c.j.r.jiang@umcutrecht.nl  
+
+# variables
+gff=/hpc/hers_basak/rnaseq_data/Basaklab/jjiang/training/1_STAR/ref_genome/GRCh38_latest_genomic.gff
+bam_directory=/hpc/hers_basak/rnaseq_data/Basaklab/jjiang/training/1_STAR/star_output/
+NAMES=(Astro1Aligned.sortedByCoord.out.bam
+Astro2Aligned.sortedByCoord.out.bam
+)
+ouput=/hpc/hers_basak/rnaseq_data/Basaklab/jjiang/training/1_STAR/count_files/
+
+# htseq-count overlap modes: -m
+# 	union(default): union of genes of mapped read positions
+#	intersect-strict: intersection of genes of mapped read positions (all positions in read need to be mapped to a gene for it to count)
+#	intersect-nonempty: intersection of genes of all non-empty mapped positions 
+
+# multiple genes behavior: --nonunique
+#	none (default): count read as ambiguous
+#	all: count read as ambiguous AND the genes
+
+# options:
+# 	-f: format of input data (sam/bam)
+# 	-r: order (sorted on position [pos] or name [name])
+#	-i: gff attribute to use as feature ID (same IDs will be counted together, its usually "gene_id in gtf files")
+
+/hpc/hers_basak/bin/miniconda3/envs/htseq/bin/htseq-count -s no -r pos -i Dbxref -f bam ${bam_directory}${NAMES[$SLURM_ARRAY_TASK_ID]} ${gff} > ${output}${NAMES[$SLURM_ARRAY_TASK_ID]}.counts
+
+
+######################################################################3
+
+#HTSEQ COUNT (RNA seq)
+
+#!/bin/bash
+#SBATCH -t 4:00:00
+#SBATCH --mem=20G
+#SBATCH --cpus-per-task=1
+#SBATCH -o htseq.log
+#SBATCH -e htseq.err
+#SBATCH --array=0-1%2
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=c.j.r.jiang@umcutrecht.nl  
+
+# variables
+gff=/hpc/hers_basak/rnaseq_data/Basaklab/jjiang/training/1_STAR/ref_genome/GRCh38_latest_genomic.gff
+bam_directory=/hpc/hers_basak/rnaseq_data/Basaklab/jjiang/training/1_STAR/star_output/
+NAMES=(Astro1Aligned.sortedByCoord.out.bam
+Astro2Aligned.sortedByCoord.out.bam
+)
+ouput=/hpc/hers_basak/rnaseq_data/Basaklab/jjiang/training/1_STAR/count_files/
+
+# htseq-count overlap modes: -m
+# 	union(default): union of genes of mapped read positions
+#	intersect-strict: intersection of genes of mapped read positions (all positions in read need to be mapped to a gene for it to count)
+#	intersect-nonempty: intersection of genes of all non-empty mapped positions 
+
+# multiple genes behavior: --nonunique
+#	none (default): count read as ambiguous
+#	all: count read as ambiguous AND the genes
+
+# options:
+# 	-f: format of input data (sam/bam)
+# 	-r: order (sorted on position [pos] or name [name])
+#	-i: gff attribute to use as feature ID (same IDs will be counted together, its usually "gene_id in gtf files")
+
+/hpc/hers_basak/bin/miniconda3/envs/htseq/bin/htseq-count-barcodes -s no -r pos -i Dbxref -f bam ${bam_directory}${NAMES[$SLURM_ARRAY_TASK_ID]} ${gff} > ${output}${NAMES[$SLURM_ARRAY_TASK_ID]}.counts

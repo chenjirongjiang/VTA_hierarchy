@@ -1,0 +1,11 @@
+## filter with index hopping filter
+
+#!/bin/bash
+#SBATCH -t 1:00:00
+#SBATCH -o filter.log
+#SBATCH -e filter.err
+
+cd /home/hers_basak/jjiang/jack/outputs/fasta_files/homo_sap/smajic_2021
+
+
+index-hopping-filter filter ./
