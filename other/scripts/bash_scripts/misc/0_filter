@@ -1,0 +1,37 @@
+## filter with index hopping filter
+
+#!/bin/bash
+#SBATCH -t 1:00:00
+#SBATCH -o filter.log
+#SBATCH -e filter.err
+
+cd /home/hers_basak/jjiang/jack/outputs/fasta_files/homo_sap/smajic_2021
+
+
+index-hopping-filter filter ./
+
+#!/bin/bash
+#SBATCH -t 12:00:00
+#SBATCH --mem=50G
+#SBATCH --cpus-per-task=4
+#SBATCH -o filter.log
+#SBATCH -e filter.err
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=c.j.r.jiang@umcutrecht.nl
+
+python3 
+####################################
+
+##the python file
+
+
+import scanpy as sc
+
+neuron_adata= sc.read_h5ad(f'{path}neurons.h5ad')
+neuron_adata.var_names_make_unique()
+print("neuron_adata is loaded")
+
+neuron_adata.X=None
+
+neuron_adata.write('filtered_neurons')
+

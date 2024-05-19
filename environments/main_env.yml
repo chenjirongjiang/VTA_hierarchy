@@ -1,0 +1,12 @@
+name: main_env
+channels:
+  - defaults
+dependencies:
+  - python==3.9.18
+  - jupyter==1.0.0
+  - ipykernel
+  - pip:
+    - scanpy==1.9.3
+    - scArches==0.5.9
+    - scHPL==1.0.3 #not needed if you use scHPL in scArches
+    - scvi-tools==1.0.3 #not needed if you use scVI in scanpy or scArches
