@@ -14,4 +14,4 @@ Key steps involve:
 - Unsupervised integration using scVI.
 - Visualise hierarchical relationships with scHPL.
 - Low resolution label prediction of previously unknown cells using a nearest neighbour algorithm.
-![Figure_3](https://github.com/chenjirongjiang/VTAmap_tests/assets/70864155/e0159fe7-4267-4ccc-b2eb-7fbefe364a2d)
+![integration](https://github.com/chenjirongjiang/VTA_hierarchy/assets/70864155/358914af-7ab2-469e-962b-091f502d82b5)
