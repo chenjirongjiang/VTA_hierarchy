@@ -1,5 +1,0 @@
-scanpy==1.9.1
-harmonypy==0.0.6
-scalex==1.0.2
-schpl==1.0.1
-unifan==1.0.0
